@@ -55,7 +55,7 @@ $ADBS shell settings put global stay_oon_while_plugged_in 7
 # disable verify apps over usb
 $ADBS shell settings put global verifier_verify_adb_installs 0
 
-# light up screen if  
+# light up screen if screen is off
 screenState=`$ADBS shell dumpsys window policy | grep screenState | sed 's/.*screenState=//g'`
 if [ "$screenState" == "SCREEN_STATE_OFF" ]; then
 	$ADBS shell input keyevent 26
