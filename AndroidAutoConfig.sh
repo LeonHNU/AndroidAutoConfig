@@ -49,7 +49,7 @@ $ADBS shell locksettings set-disabled true
 $ADBS shell wm dismiss-keyguard
 
 # set stay awake
-$ADBS shell settings put global stay_oon_while_plugged_in 7
+$ADBS shell settings put global stay_on_while_plugged_in 7
 # or $ADBS shell svc power stayon usb 
 
 # disable verify apps over usb
@@ -58,7 +58,7 @@ $ADBS shell settings put global verifier_verify_adb_installs 0
 # light up screen if screen is off
 screenState=`$ADBS shell dumpsys window policy | grep screenState | sed 's/.*screenState=//g'`
 if [ "$screenState" == "SCREEN_STATE_OFF" ]; then
-	$ADBS shell input keyevent 26
+    $ADBS shell input keyevent 26
 fi
 
 # enable wifi
