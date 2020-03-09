@@ -1,4 +1,4 @@
-package leon.hnu.configautomation;
+package leon.hnu.androidautoconfig;
 
 import org.junit.Test;
 
