@@ -12,13 +12,14 @@ Android Device Automatic Configuration
 
 How to generate apk from source code
   1. make sure you have installed android studio, android sdk, gradle.
-  2. build apk by android studio or gradle
-    2.1 use gradle for build
-    2.2 use gradle for build. 
+  2. modify AndroidAutoConfig/local.properties to define sdk.dir(this is the local android sdk path)
+  3. build apk by android studio or gradle
+    3.1 use gradle for build
+    3.2 use gradle for build. 
         cd AndroidAutoConfig
         gradlew build
         gradlew assembleAndroidTest
-  3. copy apk to root dir
+  4. copy apk to root dir
         ./copy_apk.sh
 
 How to use this tool
