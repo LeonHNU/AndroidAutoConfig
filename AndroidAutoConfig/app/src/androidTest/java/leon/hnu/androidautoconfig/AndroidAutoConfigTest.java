@@ -85,9 +85,7 @@ public class AndroidAutoConfigTest {
             try {
                 connectWifi(wifiApName, wifiApPwd);
                 if (!isWifiConnected()) {
-                    Log.d(TAG, "Before Sleep");
                     Thread.sleep(10000);
-                    Log.d(TAG, "After Sleep");
                 }
             } catch (Exception e) {
                 Log.d(TAG, e.toString());
