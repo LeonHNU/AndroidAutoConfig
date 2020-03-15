@@ -8,7 +8,6 @@ import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
-import android.os.RemoteException;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Xml;
@@ -161,8 +160,12 @@ public class AndroidAutoConfigTest {
         waitforTextAndClick("Accept & continue");
         mUiDevice.waitForWindowUpdate(PACKAGE_NAME_CHROME, WINDOW_UPDATE_TIMEOUT);
 
-        waitforTextAndClick("Next");
-        mUiDevice.waitForWindowUpdate(PACKAGE_NAME_CHROME, WINDOW_UPDATE_TIMEOUT);
+        try {
+            waitforTextAndClick("Next");
+            mUiDevice.waitForWindowUpdate(PACKAGE_NAME_CHROME, WINDOW_UPDATE_TIMEOUT);
+        } catch (Exception e) {
+            Log.d(TAG, "Can not find \"Next\" button during testChromeFirstOpen, skip");
+        }
 
         waitforTextAndClick("No thanks");
         mUiDevice.waitForWindowUpdate(PACKAGE_NAME_CHROME, WINDOW_UPDATE_TIMEOUT);
@@ -190,13 +193,21 @@ public class AndroidAutoConfigTest {
         final String LOCALE_US_DISPLAY_NAME = LOCALE_US_LANGUAGE + " (" + LOCALE_US_COUNTRY + ")";
         UiObject2 obj;
 
+        String currentPackageName = mUiDevice.getCurrentPackageName();
         // If system language is English(United States), then change to it.
         if(!mContext.getResources().getConfiguration().locale.getDisplayName().equals(LOCALE_US_DISPLAY_NAME)) {
-            setSetupWizardLocale(LOCALE_US_LANGUAGE, LOCALE_US_COUNTRY);
+            if (currentPackageName.equals(PACKAGE_NAME_SETUPWIZARD)) {
+                setSetupWizardLocale(LOCALE_US_LANGUAGE, LOCALE_US_COUNTRY);
+            } else {
+                // to be done. If SetupWizard has already gone through, find other ways to change system language
+            }
         }
 
-        while (!mUiDevice.getCurrentPackageName().equals(PACKAGE_NAME_LAUNCHER)) {
+        boolean inSetupWizard = false;
+        while (currentPackageName.equals(PACKAGE_NAME_SETUPWIZARD) || (inSetupWizard && !currentPackageName.equals(PACKAGE_NAME_LAUNCHER))) {
+            inSetupWizard = true;
             mUiDevice.waitForWindowUpdate(PACKAGE_NAME_SETUPWIZARD, WINDOW_UPDATE_TIMEOUT);
+            currentPackageName = mUiDevice.getCurrentPackageName();
 
             obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("START"));
             if (obj != null) {
@@ -229,18 +240,6 @@ public class AndroidAutoConfigTest {
             }
 
             obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Accept"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Skip anyway"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Skip anyway"));
             if (obj != null) {
                 obj.click();
                 continue;
@@ -380,8 +379,12 @@ public class AndroidAutoConfigTest {
         systemObject.click();
         mUiDevice.waitForWindowUpdate(PACKAGE_NAME_SETTINGS, WINDOW_UPDATE_TIMEOUT);
 
-        waitforTextAndClick("Advanced");
-        mUiDevice.waitForWindowUpdate(PACKAGE_NAME_SETTINGS, WINDOW_UPDATE_TIMEOUT);
+        try {
+            waitforTextAndClick("Advanced");
+            mUiDevice.waitForWindowUpdate(PACKAGE_NAME_SETTINGS, WINDOW_UPDATE_TIMEOUT);
+        } catch (Exception e) {
+            Log.d(TAG, "Can not find \"Advanced\" button during tesFactoryReset, skip");
+        }
 
         waitforTextAndClick("Reset options");
         mUiDevice.waitForWindowUpdate(PACKAGE_NAME_SETTINGS, WINDOW_UPDATE_TIMEOUT);
