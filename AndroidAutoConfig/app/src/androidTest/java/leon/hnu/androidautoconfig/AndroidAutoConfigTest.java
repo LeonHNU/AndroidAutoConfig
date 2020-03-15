@@ -329,11 +329,42 @@ public class AndroidAutoConfigTest {
     }
 
     @Test
-    public void testCloseAllApps() throws RemoteException, InterruptedException {
-        mUiDevice.pressRecentApps();
-        Thread.sleep(2000);
-        mUiDevice.findObject(By.res(PACKAGE_NAME_LAUNCHER,"clear_all_button")).click();
-        mUiDevice.waitForIdle();
+    public void testCloseAllApps() throws Exception {
+        UiObject2 mObject =  mUiDevice.findObject(By.res(PACKAGE_NAME_LAUNCHER,"overview_panel"));
+        if (mObject == null) {
+            mUiDevice.pressRecentApps();
+            Thread.sleep(2000);
+            mObject =  mUiDevice.findObject(By.res(PACKAGE_NAME_LAUNCHER,"overview_panel"));
+        }
+
+        if (mObject != null) {
+            mObject = mUiDevice.findObject(By.res(PACKAGE_NAME_LAUNCHER, "clear_all_button"));
+            if (mObject != null) {
+                mObject.click();
+                mUiDevice.waitForIdle();
+            } else {
+                final int MAX_RECENT_APP = 20;
+                final int DISPLAY_HIGHT = mUiDevice.getDisplayHeight();
+                final int DISPLAY_WIDTH = mUiDevice.getDisplayWidth();
+
+                int tryNum = 0;
+                mObject = mUiDevice.findObject(By.res(PACKAGE_NAME_LAUNCHER, "clear_all"));
+                while ((mObject == null) && (tryNum < MAX_RECENT_APP)) {
+                    mUiDevice.swipe(DISPLAY_WIDTH / 4, DISPLAY_HIGHT/2, DISPLAY_HIGHT * 3 / 4, DISPLAY_WIDTH / 2, 5);
+                    mUiDevice.waitForIdle();
+                    mObject = mUiDevice.findObject(By.res(PACKAGE_NAME_LAUNCHER, "clear_all"));
+                    tryNum ++;
+                }
+
+                if (mObject != null) {
+                    mObject.click();
+                } else {
+                    throw new Exception("Failed to find clear all button after max retry times for normal recents device");
+                }
+            }
+        } else {
+            throw new Exception("Failed to find recents overview");
+        }
     }
 
     @Test
