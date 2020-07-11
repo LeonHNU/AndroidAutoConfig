@@ -102,7 +102,7 @@ public class AndroidAutoConfigTest {
 
     private void connectWifi(String apName, String apPassword) throws InterruptedException, UiObjectNotFoundException {
 
-        mContext.startActivity(new Intent().setAction(WifiManager.ACTION_PICK_WIFI_NETWORK).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        mContext.startActivity(new Intent().setAction(WifiManager.ACTION_PICK_WIFI_NETWORK).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).setPackage(PACKAGE_NAME_SETTINGS));
         Thread.sleep(3000);
         mUiDevice.waitForWindowUpdate(PACKAGE_NAME_SETTINGS, WINDOW_UPDATE_TIMEOUT);
         UiObject2 wifiSwitch = mUiDevice.findObject(By.res(PACKAGE_NAME_SETTINGS,"switch_widget"));
@@ -210,6 +210,12 @@ public class AndroidAutoConfigTest {
             currentPackageName = mUiDevice.getCurrentPackageName();
 
             obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("START"));
+            if (obj != null) {
+                obj.click();
+                continue;
+            }
+
+	    obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Set up offline"));
             if (obj != null) {
                 obj.click();
                 continue;
