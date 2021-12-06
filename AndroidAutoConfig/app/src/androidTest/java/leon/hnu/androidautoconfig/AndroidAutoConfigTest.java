@@ -233,6 +233,12 @@ public class AndroidAutoConfigTest {
                 continue;
             }
 
+	    obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Continue"));
+            if (obj != null) {
+                obj.click();
+                continue;
+            }
+
             obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Next"));
             if (obj != null) {
                 obj.click();
