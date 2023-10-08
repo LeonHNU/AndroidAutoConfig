@@ -5,9 +5,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.RemoteException;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Xml;
@@ -53,13 +55,16 @@ public class AndroidAutoConfigTest {
     private ConnectivityManager mConnectivityManager;
     private String wifiApName;
     private String wifiApPwd;
+    private String wifiApCrypto;
+    private String googleAccountName;
+    private String googleAccountPwd;
 
     @Before
     public void setUp() throws IOException, XmlPullParserException {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mConnectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        getDeviceConfig();
+        //getDeviceConfig();
     }
 
     private void startActivity(String packageName, String activityName, String subActivityName) {
@@ -186,85 +191,6 @@ public class AndroidAutoConfigTest {
         mUiDevice.waitForWindowUpdate(PACKAGE_NAME_CAMERA, WINDOW_UPDATE_TIMEOUT);
     }
 
-    @Test
-    public void testGoThroughSetupWizard() throws UiObjectNotFoundException {
-        final String LOCALE_US_LANGUAGE = "English";
-        final String LOCALE_US_COUNTRY = "United States";
-        final String LOCALE_US_DISPLAY_NAME = LOCALE_US_LANGUAGE + " (" + LOCALE_US_COUNTRY + ")";
-        UiObject2 obj;
-
-        String currentPackageName = mUiDevice.getCurrentPackageName();
-        // If system language is English(United States), then change to it.
-        if(!mContext.getResources().getConfiguration().locale.getDisplayName().equals(LOCALE_US_DISPLAY_NAME)) {
-            if (currentPackageName.equals(PACKAGE_NAME_SETUPWIZARD)) {
-                setSetupWizardLocale(LOCALE_US_LANGUAGE, LOCALE_US_COUNTRY);
-            } else {
-                // to be done. If SetupWizard has already gone through, find other ways to change system language
-            }
-        }
-
-        boolean inSetupWizard = false;
-        while (currentPackageName.equals(PACKAGE_NAME_SETUPWIZARD) || (inSetupWizard && !currentPackageName.equals(PACKAGE_NAME_LAUNCHER))) {
-            inSetupWizard = true;
-            mUiDevice.waitForWindowUpdate(PACKAGE_NAME_SETUPWIZARD, WINDOW_UPDATE_TIMEOUT);
-            currentPackageName = mUiDevice.getCurrentPackageName();
-
-            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("START"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-	    obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Set up offline"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Skip"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("CONTINUE"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-	    obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Continue"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Next"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("More"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Accept"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-
-            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Skip anyway"));
-            if (obj != null) {
-                obj.click();
-                continue;
-            }
-        }
-    }
-
     private void setSetupWizardLocale(String language, String country) throws UiObjectNotFoundException {
         mUiDevice.findObject(By.res(PACKAGE_NAME_SETUPWIZARD, "language_picker")).click();
         mUiDevice.waitForWindowUpdate(PACKAGE_NAME_SETUPWIZARD, WINDOW_UPDATE_TIMEOUT);
@@ -276,32 +202,6 @@ public class AndroidAutoConfigTest {
         UiScrollable countryList = new UiScrollable(new UiSelector().className("android.widget.ListView"));
         countryList.getChildByText(new UiSelector().className("android.widget.TextView"), country).click();
         mUiDevice.waitForWindowUpdate(PACKAGE_NAME_SETUPWIZARD, WINDOW_UPDATE_TIMEOUT);
-    }
-
-    @Test
-    public void testConfigCTS() throws Exception {
-        testGoThroughSetupWizard();
-        testConnectWifi();
-        testChromeFirstOpen();
-        testCameraFirstOpen();
-        testCloseAllApps();
-    }
-
-    @Test
-    public void testConfigGTS() throws Exception {
-        testGoThroughSetupWizard();
-        testConnectWifi();
-        testEnableBackup();
-        testChromeFirstOpen();
-        testCameraFirstOpen();
-        testCloseAllApps();
-    }
-
-    @Test
-    public void testConfigVTS() throws Exception {
-        testConnectWifi();
-        testCameraFirstOpen();
-        testCloseAllApps();
     }
 
     /* Use JAVA reflect to set system locale.
@@ -410,6 +310,28 @@ public class AndroidAutoConfigTest {
         waitforTextAndClick("Erase all data");
     }
 
+    private void waitforText(String text, int waitTimeSecond) throws Exception {
+        int retryTimes = 0;
+        UiObject2 textObj = mUiDevice.findObject(By.text(text));
+
+        while((textObj == null) && (retryTimes <= waitTimeSecond)) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            textObj = mUiDevice.findObject(By.text(text));
+            retryTimes++;
+        }
+
+        if (textObj == null) {
+            Log.d("Leon", "Wait for \"" + text + "\" Failed");
+            throw new Exception("Wait for text: " + text + ", error");
+        } else {
+            Log.d("Leon", "Wait for \"" + text + "\" success");
+        }
+    }
+
     private void waitforTextAndClick(String text) throws Exception {
         final int DEF_WAIT_SECONDS = 10;
          waitforTextAndClick(text, DEF_WAIT_SECONDS);
@@ -431,6 +353,7 @@ public class AndroidAutoConfigTest {
 
         if (textObj != null) {
             textObj.click();
+            Log.d("Leon", "Clicked: " + text);
         } else {
             throw new Exception("Wait for text: " + text + ", error");
         }
@@ -440,6 +363,9 @@ public class AndroidAutoConfigTest {
         final String CFG_FILE = "/data/local/tmp/DeviceConfig.xml";
         final String TAG_WIFI_AP_NAME  = "wifi_ap_name";
         final String TAG_WIFI_AP_PWD = "wifi_ap_pwd";
+        final String TAG_WIFI_AP_CRYPTO = "wifi_ap_crypto";
+        final String TAG_GOOGLE_ACCOUNT_NAME = "google_account_name";
+        final String TAG_GOOGLE_ACCOUNT_PWD = "google_account_pwd";
 
         File cfgFile = new File(CFG_FILE);
         FileInputStream cfgFileIS = new FileInputStream(cfgFile);
@@ -456,9 +382,382 @@ public class AndroidAutoConfigTest {
                 } else if (parser.getName().equals(TAG_WIFI_AP_PWD)) {
                     parser.next();
                     wifiApPwd = parser.getText();
+                } else if (parser.getName().equals(TAG_WIFI_AP_CRYPTO)) {
+                    parser.next();
+                    wifiApCrypto = parser.getText();
+                } else if (parser.getName().equals(TAG_GOOGLE_ACCOUNT_NAME)) {
+                    parser.next();
+                    googleAccountName = parser.getText();
+                } else if (parser.getName().equals(TAG_GOOGLE_ACCOUNT_PWD)) {
+                    parser.next();
+                    googleAccountPwd = parser.getText();
                 }
             }
             eventType = parser.next();
         }
+
+        Log.d("Leon", "Device config loaded, wifiApName: " + wifiApName + ", wifiApPwd: " + wifiApPwd + ", wifiApCrypto: " + wifiApCrypto + ", googleAccountName: " + googleAccountName + ", googleAccountPwd: " + googleAccountPwd);
+    }
+
+    private void addWifiInSetupWizard() {
+        UiObject2 obj;
+
+        obj = mUiDevice.findObject(By.res("com.android.settings", "ssid"));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.res("com.android.settings", "ssid"));
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+        }
+        Log.d("Leon", "set SSID");
+        obj.setText(wifiApName);
+        mUiDevice.waitForIdle();
+        try {
+            Thread.sleep(5000);
+        } catch (Exception e) {
+        }
+
+        obj = mUiDevice.findObject(By.res("com.android.settings", "security"));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.res("com.android.settings", "security"));
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+        }
+        Log.d("Leon", "set expand security choices");
+        obj.click();
+        mUiDevice.waitForIdle();
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+        }
+
+        obj = mUiDevice.findObject(By.clazz("android.widget.CheckedTextView").text(wifiApCrypto));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.clazz("android.widget.CheckedTextView").text(wifiApCrypto));
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+        }
+        Log.d("Leon", "select wifi crypto");
+        obj.click();
+        mUiDevice.waitForIdle();
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+        }
+
+        obj = mUiDevice.findObject(By.res("com.android.settings", "password"));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.res("com.android.settings", "password"));
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+        }
+        Log.d("Leon", "set wifi pwd");
+        obj.setText(wifiApPwd);
+        mUiDevice.waitForIdle();
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+        }
+
+        obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Save"));
+        Log.d("Leon", "save wifi settings");
+        obj.click();
+    }
+
+    private void addGoogleAccountInSetupWizard() {
+        UiObject2 obj;
+        Point p1, p2;
+        int x,y;
+
+        obj = mUiDevice.findObject(By.clazz("android.widget.TextView").text("with your Google Account. "));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.clazz("android.widget.TextView").text("with your Google Account. "));
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+        }
+        p1 = obj.getVisibleCenter();
+
+        obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Create account"));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.clazz("android.widget.TextView").text("Create account"));
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+        }
+        p2 = obj.getVisibleCenter();
+
+        x = (p1.x + p2.x) / 2;
+        y = (p1.y + p2.y) / 2;
+
+        Log.d("Leon", "choose account name column");
+        mUiDevice.click(x, y);
+
+        try {
+            Thread.sleep(2000);
+        } catch (Exception e) {
+        }
+
+        obj = mUiDevice.findObject(By.clazz("android.widget.EditText"));
+        Log.d("Leon", "set Google account name: " + googleAccountName);
+        obj.setText(googleAccountName);
+
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+        }
+
+        obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Next"));
+        if (obj != null) {
+            Log.d("Leon", "Click Next with Account Name");
+            obj.click();
+        } else {
+            Log.d("Leon", "Press Enter with Account Name");
+            mUiDevice.pressEnter();
+        }
+
+        try {
+            Thread.sleep(5000);
+        } catch (Exception e) {
+        }
+
+        obj = mUiDevice.findObject(By.res("password"));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.res( "password"));
+            try {
+                Thread.sleep(10000);
+            } catch (Exception e) {
+            }
+        }
+        obj = mUiDevice.findObject(By.clazz("android.widget.EditText"));
+        Log.d("Leon", "set Google account pwd: " + googleAccountPwd);
+        obj.setText(googleAccountPwd);
+        try {
+            Thread.sleep(2000);
+        } catch (Exception e) {
+        }
+        Log.d("Leon", "Click Enter with Account PWD");
+        mUiDevice.pressEnter();
+
+        while (true) {
+            try {
+                Thread.sleep(10000);
+            } catch (Exception e) {
+            }
+
+            obj = mUiDevice.findObject(By.clazz("android.widget.EditText"));
+            if (obj == null) {
+                break;
+            } else {
+                Log.d("Leon", "set Google account pwd: " + googleAccountPwd + " again");
+                obj.setText(googleAccountPwd);
+                try {
+                    Thread.sleep(2000);
+                } catch (Exception e) {
+                }
+                Log.d("Leon", "Click Enter with Account PWD again");
+                mUiDevice.pressEnter();
+            }
+        }
+    }
+
+    @Test
+    public void testDoMainlineUpdate() throws UiObjectNotFoundException {
+        try {
+            mUiDevice.wakeUp();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+
+        UiObject2 obj = mUiDevice.findObject(By.clazz("android.widget.TextView").text("System & updates"));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.clazz("android.widget.TextView").text("System & updates"));
+        }
+        obj.click();
+
+        obj = mUiDevice.findObject(By.clazz("android.widget.TextView").text("Google Play system update"));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.clazz("android.widget.TextView").text("Google Play system update"));
+        }
+        obj.click();
+
+        obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Download & install"));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Download & install"));
+        }
+        obj.click();
+
+        obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Restart now"));
+        while (obj == null) {
+            obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Restart now"));
+        }
+        obj.click();
+
+    }
+
+    @Test
+    public void testDoMainlineUpdateScroll() throws UiObjectNotFoundException {
+        try {
+            mUiDevice.wakeUp();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+
+        // In case system ui ANR
+        UiObject2 obj2 = mUiDevice.findObject(By.clazz("android.widget.Button").text("Wait"));
+        if (obj2 != null) {
+            Log.d("Leon","Click Wait Button");
+            obj2.click();
+        }
+
+        try {
+            Thread.sleep(2000);
+        } catch (Exception e) {
+
+        }
+
+        UiScrollable scroll = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
+        UiObject obj = scroll.getChildByText(new UiSelector().className("android.widget.TextView"), "System & updates");
+        Log.d("Leon","Click System & Updates");
+        obj.click();
+
+        try {
+            Thread.sleep(5000);
+        } catch (Exception e) {
+
+        }
+
+        while (true) {
+            try {
+                scroll = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
+                obj = scroll.getChildByText(new UiSelector().className("android.widget.TextView"), "Google Play system update");
+                if (obj != null & obj.isEnabled()) {
+                    Log.d("Leon","Click Google Play system update");
+                    obj.click();
+                    try {
+                        Thread.sleep(2000);
+                    } catch (Exception e) {
+                    }
+                }
+            } catch (UiObjectNotFoundException e) {
+            }
+
+            obj2 = mUiDevice.findObject(By.clazz("android.widget.Button").text("Download & install"));
+            if (obj2 != null) {
+                Log.d("Leon","Click Download & install  Button");
+                obj2.click();
+                try {
+                    Thread.sleep(2000);
+                } catch (Exception e) {
+                }
+            }
+
+            obj2 = mUiDevice.findObject(By.clazz("android.widget.Button").text("Restart now"));
+            if (obj2 != null) {
+                Log.d("Leon","Click Restart now Button");
+                obj2.click();
+            }
+        }
+    }
+
+    @Test
+    public void testGoThroughSetupWizardPure() throws Exception {
+        testGoThroughSetupWizard(false, false);
+    }
+
+    @Test
+    public void testGoThroughSetupWizardWithWifiConnection() throws Exception {
+        testGoThroughSetupWizard(true, false);
+    }
+
+    @Test
+    public void testGoThroughSetupWizardWithGoogleAccount() throws Exception {
+        testGoThroughSetupWizard(true, true);
+    }
+
+    private void testGoThroughSetupWizard(boolean wifi, boolean loginGoogleAccount) throws Exception {
+        UiObject2 obj, obj1;
+        boolean wifiAlreadyConfig = false;
+        boolean startClicked = false;
+        Log.d("Leon","start testGoThroughSetupWizard, wifi: " + wifi + ", loginGoogleAccount: " + loginGoogleAccount);
+
+        // If requires wifi connection or login Google account, configs for wifi and google account must be fetched
+        if (wifi || loginGoogleAccount) {
+            getDeviceConfig();
+        }
+
+        try {
+            mUiDevice.wakeUp();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+
+        waitforTextAndClick("Start", 10);
+
+        if (wifi || loginGoogleAccount) {
+            waitforTextAndClick("Add new network", 50);
+            addWifiInSetupWizard();
+            waitforTextAndClick("Don’t copy", 300);
+            if (loginGoogleAccount) {
+                addGoogleAccountInSetupWizard();
+                waitforTextAndClick("I agree", 30);
+                waitforText("More", 300);
+            } else {
+                waitforText("Skip", 60);
+                while (true) {
+                    try {
+                        waitforTextAndClick("Skip", 5);
+                        Log.d("Leon", "Button to skip Sign in, Clicked");
+                    } catch (Exception e) {
+                        // no Skip button any more, we can go on to next step
+                        break;
+                    }
+                    Thread.sleep(5000);
+                }
+            }
+
+        } else {
+            try {
+                waitforTextAndClick("Set up offline", 30);
+            } catch (Exception e) {
+                Log.d("Leon", "Can't find Button \"Set up offline\", switch back and try again");
+                mUiDevice.pressBack();
+                mUiDevice.waitForIdle();
+
+                waitforTextAndClick("Start", 10);
+                waitforTextAndClick("Set up offline", 60);
+            }
+            waitforTextAndClick("Continue", 10);
+            waitforTextAndClick("Next", 10);
+        }
+
+        waitforTextAndClick("More", 10);
+        waitforTextAndClick("Accept", 10);
+        waitforTextAndClick("Skip", 10);
+        waitforTextAndClick("Skip anyway", 10);
+
+        if (loginGoogleAccount) {
+            waitforText("No thanks", 60);
+            while (true) {
+                try {
+                    waitforTextAndClick("No thanks", 5);
+                    Log.d("Leon", "Click on No thanks");
+                } catch (Exception e) {
+                    break;
+                }
+                Thread.sleep(5000);
+            }
+        }
+
+        Log.d("Leon","end testGoThroughSetupWizard");
     }
 }
