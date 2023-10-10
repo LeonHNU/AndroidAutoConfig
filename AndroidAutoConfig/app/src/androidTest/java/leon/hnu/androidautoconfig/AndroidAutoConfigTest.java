@@ -526,6 +526,14 @@ public class AndroidAutoConfigTest {
         }
 
         try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+        }
+        //make sure account name confirmed in case Next button is overlayed by soft keyboard
+        Log.d("Leon", "Press Enter again to confirm Account Name");
+        mUiDevice.pressEnter();
+
+        try {
             Thread.sleep(5000);
         } catch (Exception e) {
         }
@@ -622,30 +630,39 @@ public class AndroidAutoConfigTest {
         try {
             Thread.sleep(2000);
         } catch (Exception e) {
-
-        }
-
-        UiScrollable scroll = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
-        UiObject obj = scroll.getChildByText(new UiSelector().className("android.widget.TextView"), "System & updates");
-        Log.d("Leon","Click System & Updates");
-        obj.click();
-
-        try {
-            Thread.sleep(5000);
-        } catch (Exception e) {
-
         }
 
         while (true) {
             try {
-                scroll = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
-                obj = scroll.getChildByText(new UiSelector().className("android.widget.TextView"), "Google Play system update");
-                if (obj != null & obj.isEnabled()) {
-                    Log.d("Leon","Click Google Play system update");
+                UiScrollable scroll = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
+                UiObject obj = scroll.getChildByText(new UiSelector().className("android.widget.TextView"), "System & updates");
+                if (obj != null) {
+                    Log.d("Leon", "Click System & Updates");
                     obj.click();
                     try {
-                        Thread.sleep(2000);
+                        Thread.sleep(5000);
                     } catch (Exception e) {
+                    }
+                }
+
+                scroll = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
+                obj = scroll.getChildByText(new UiSelector().className("android.widget.TextView"), "Google Play system update");
+                if (obj != null) {
+                    if (obj.isEnabled()) {
+                        Log.d("Leon", "Click Google Play system update");
+                        obj.click();
+                        try {
+                            Thread.sleep(2000);
+                        } catch (Exception e) {
+                        }
+                    } else{
+                        Log.d("Leon", "Google Play system update menu not enabled, it seems no update info received, switch to upper level menu and then back in to refresh");
+                        mUiDevice.pressBack();
+                        try {
+                            Thread.sleep(30000);
+                        } catch (Exception e) {
+                        }
+                        continue;
                     }
                 }
             } catch (UiObjectNotFoundException e) {
