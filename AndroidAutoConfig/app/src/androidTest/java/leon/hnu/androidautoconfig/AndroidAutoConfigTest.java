@@ -35,6 +35,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.*;
 
@@ -334,10 +335,15 @@ public class AndroidAutoConfigTest {
 
     private void waitforTextAndClick(String text) throws Exception {
         final int DEF_WAIT_SECONDS = 10;
-         waitforTextAndClick(text, DEF_WAIT_SECONDS);
+         waitforTextAndClick(text, DEF_WAIT_SECONDS, true);
     }
 
     private void waitforTextAndClick(String text, int waitTimeSecond) throws Exception {
+        final int DEF_WAIT_SECONDS = 10;
+        waitforTextAndClick(text, waitTimeSecond, true);
+    }
+
+    private void waitforTextAndClick(String text, int waitTimeSecond, boolean throwIfNotFound) throws Exception {
         int retryTimes = 0;
         UiObject2 textObj = mUiDevice.findObject(By.text(text));
 
@@ -355,7 +361,10 @@ public class AndroidAutoConfigTest {
             textObj.click();
             Log.d("Leon", "Clicked: " + text);
         } else {
-            throw new Exception("Wait for text: " + text + ", error");
+            Log.d("Leon", text + " :not found");
+            if (throwIfNotFound) {
+                throw new Exception("Wait for text: " + text + ", error");
+            }
         }
     }
 
@@ -757,9 +766,16 @@ public class AndroidAutoConfigTest {
             waitforTextAndClick("Next", 10);
         }
 
-        waitforTextAndClick("More", 10);
+        waitforTextAndClick("More", 10, false);
         waitforTextAndClick("Accept", 10);
         waitforTextAndClick("Skip", 10);
+        // In case skip button is repositioned for showing soft keyboard
+        // Two continues same ui search should be very careful, add time gap
+        try {
+            Thread.sleep(2000);
+        } catch (Exception e) {
+        }
+        waitforTextAndClick("Skip", 5, false);
         waitforTextAndClick("Skip anyway", 10);
 
         if (loginGoogleAccount) {
@@ -776,5 +792,59 @@ public class AndroidAutoConfigTest {
         }
 
         Log.d("Leon","end testGoThroughSetupWizard");
+    }
+
+    private void checkButtonAndClickIfExists(String buttonName) throws Exception {
+        checkButtonAndClickIfExists(buttonName, 2);
+    }
+    private void checkButtonAndClickIfExists(String buttonName, int timeWaitAfterClickMs) throws Exception {
+        UiObject2 obj = mUiDevice.findObject(By.clazz("android.widget.Button").text(buttonName));
+        if (obj != null && obj.isEnabled()) {
+            obj.click();
+            Log.d("Leon", "Clicked \"" + buttonName + "\" button");
+            mUiDevice.waitForIdle();
+            try {
+                Thread.sleep(timeWaitAfterClickMs * 1000);
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    @Test
+    public void testGoThroughSetupWizardPureByWhile() throws Exception {
+        mUiDevice.wakeUp();
+        try {
+            Thread.sleep(5000);
+        } catch (Exception e) {
+        }
+
+        String currentPackageName = mUiDevice.getCurrentPackageName();
+        boolean inSetupWizardOnce = false;
+        while (!inSetupWizardOnce || !PACKAGE_NAME_LAUNCHER.equals(currentPackageName)) {
+            if (!inSetupWizardOnce) {
+                if (PACKAGE_NAME_SETUPWIZARD.equals(currentPackageName)) {
+                    inSetupWizardOnce = true;
+                }
+            } else {
+                try {
+                    checkButtonAndClickIfExists("Start");
+                    checkButtonAndClickIfExists("Set up offline");
+                    checkButtonAndClickIfExists("Continue");
+                    checkButtonAndClickIfExists("Next");
+                    checkButtonAndClickIfExists("More");
+                    checkButtonAndClickIfExists("Accept");
+                    checkButtonAndClickIfExists("Skip");
+                    checkButtonAndClickIfExists("Skip anyway");
+                } catch (Exception e) {
+                    Log.d("Leon", "Exception during going through setupwizard while loop, ignore: " + e.toString());
+                }
+            }
+            try {
+                Thread.sleep(2000);
+            } catch (Exception e) {
+            }
+            currentPackageName = mUiDevice.getCurrentPackageName();
+        }
+        Log.d("Leon", "Going through setupwizard successfully, we have come to launcher");
     }
 }
