@@ -794,10 +794,10 @@ public class AndroidAutoConfigTest {
         Log.d("Leon","end testGoThroughSetupWizard");
     }
 
-    private void checkButtonAndClickIfExists(String buttonName) throws Exception {
-        checkButtonAndClickIfExists(buttonName, 2);
+    private boolean checkButtonAndClickIfExists(String buttonName) throws Exception {
+        return checkButtonAndClickIfExists(buttonName, 2);
     }
-    private void checkButtonAndClickIfExists(String buttonName, int timeWaitAfterClickMs) throws Exception {
+    private boolean checkButtonAndClickIfExists(String buttonName, int timeWaitAfterClickMs) throws Exception {
         UiObject2 obj = mUiDevice.findObject(By.clazz("android.widget.Button").text(buttonName));
         if (obj != null && obj.isEnabled()) {
             obj.click();
@@ -807,6 +807,9 @@ public class AndroidAutoConfigTest {
                 Thread.sleep(timeWaitAfterClickMs * 1000);
             } catch (Exception e) {
             }
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -820,6 +823,8 @@ public class AndroidAutoConfigTest {
 
         String currentPackageName = mUiDevice.getCurrentPackageName();
         boolean inSetupWizardOnce = false;
+        boolean shouldCheckSetupOfflineButton = false;
+        int cntSetupOfflineButtonNotFound = 0;
         while (!inSetupWizardOnce || !PACKAGE_NAME_LAUNCHER.equals(currentPackageName)) {
             if (!inSetupWizardOnce) {
                 if (PACKAGE_NAME_SETUPWIZARD.equals(currentPackageName)) {
@@ -827,8 +832,29 @@ public class AndroidAutoConfigTest {
                 }
             } else {
                 try {
-                    checkButtonAndClickIfExists("Start");
-                    checkButtonAndClickIfExists("Set up offline");
+                    if (checkButtonAndClickIfExists("Start")) {
+                        // If "start" button is clicked, we also start to check "Set up offline" button
+                        // If "Set up offline" button doesn't appear for a certain time, it may got some
+                        // problem to get the button displayed. We can get back and start all over again
+                        // as a workaround.
+                        shouldCheckSetupOfflineButton = true;
+                        cntSetupOfflineButtonNotFound = 0;
+                    }
+                    if (!checkButtonAndClickIfExists("Set up offline")) {
+                        if (shouldCheckSetupOfflineButton) {
+                            // Increases counter
+                            cntSetupOfflineButtonNotFound++;
+                            if (cntSetupOfflineButtonNotFound > 20) {
+                                Log.d("Leon", "Search for \'Set up offline\' button timeout, it maybe in a bad state, try press back to recover");
+                                mUiDevice.pressBack();
+                            }
+                        } else {
+
+                            // We have found "Set up offline" button, no need to check it now.
+                            shouldCheckSetupOfflineButton = false;
+                            cntSetupOfflineButtonNotFound = 0;
+                        }
+                    }
                     checkButtonAndClickIfExists("Continue");
                     checkButtonAndClickIfExists("Next");
                     checkButtonAndClickIfExists("More");
