@@ -326,10 +326,10 @@ public class AndroidAutoConfigTest {
         }
 
         if (textObj == null) {
-            Log.d("Leon", "Wait for \"" + text + "\" Failed");
+            Log.d(TAG, "Wait for \"" + text + "\" Failed");
             throw new Exception("Wait for text: " + text + ", error");
         } else {
-            Log.d("Leon", "Wait for \"" + text + "\" success");
+            Log.d(TAG, "Wait for \"" + text + "\" success");
         }
     }
 
@@ -359,9 +359,9 @@ public class AndroidAutoConfigTest {
 
         if (textObj != null) {
             textObj.click();
-            Log.d("Leon", "Clicked: " + text);
+            Log.d(TAG, "Clicked: " + text);
         } else {
-            Log.d("Leon", text + " :not found");
+            Log.d(TAG, text + " :not found");
             if (throwIfNotFound) {
                 throw new Exception("Wait for text: " + text + ", error");
             }
@@ -405,7 +405,7 @@ public class AndroidAutoConfigTest {
             eventType = parser.next();
         }
 
-        Log.d("Leon", "Device config loaded, wifiApName: " + wifiApName + ", wifiApPwd: " + wifiApPwd + ", wifiApCrypto: " + wifiApCrypto + ", googleAccountName: " + googleAccountName + ", googleAccountPwd: " + googleAccountPwd);
+        Log.d(TAG, "Device config loaded, wifiApName: " + wifiApName + ", wifiApPwd: " + wifiApPwd + ", wifiApCrypto: " + wifiApCrypto + ", googleAccountName: " + googleAccountName + ", googleAccountPwd: " + googleAccountPwd);
     }
 
     private void addWifiInSetupWizard() {
@@ -419,7 +419,7 @@ public class AndroidAutoConfigTest {
             } catch (Exception e) {
             }
         }
-        Log.d("Leon", "set SSID");
+        Log.d(TAG, "set SSID");
         obj.setText(wifiApName);
         mUiDevice.waitForIdle();
         try {
@@ -435,7 +435,7 @@ public class AndroidAutoConfigTest {
             } catch (Exception e) {
             }
         }
-        Log.d("Leon", "set expand security choices");
+        Log.d(TAG, "set expand security choices");
         obj.click();
         mUiDevice.waitForIdle();
         try {
@@ -451,7 +451,7 @@ public class AndroidAutoConfigTest {
             } catch (Exception e) {
             }
         }
-        Log.d("Leon", "select wifi crypto");
+        Log.d(TAG, "select wifi crypto");
         obj.click();
         mUiDevice.waitForIdle();
         try {
@@ -467,7 +467,7 @@ public class AndroidAutoConfigTest {
             } catch (Exception e) {
             }
         }
-        Log.d("Leon", "set wifi pwd");
+        Log.d(TAG, "set wifi pwd");
         obj.setText(wifiApPwd);
         mUiDevice.waitForIdle();
         try {
@@ -476,7 +476,7 @@ public class AndroidAutoConfigTest {
         }
 
         obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Save"));
-        Log.d("Leon", "save wifi settings");
+        Log.d(TAG, "save wifi settings");
         obj.click();
     }
 
@@ -508,7 +508,7 @@ public class AndroidAutoConfigTest {
         x = (p1.x + p2.x) / 2;
         y = (p1.y + p2.y) / 2;
 
-        Log.d("Leon", "choose account name column");
+        Log.d(TAG, "choose account name column");
         mUiDevice.click(x, y);
 
         try {
@@ -517,7 +517,7 @@ public class AndroidAutoConfigTest {
         }
 
         obj = mUiDevice.findObject(By.clazz("android.widget.EditText"));
-        Log.d("Leon", "set Google account name: " + googleAccountName);
+        Log.d(TAG, "set Google account name: " + googleAccountName);
         obj.setText(googleAccountName);
 
         try {
@@ -527,10 +527,10 @@ public class AndroidAutoConfigTest {
 
         obj = mUiDevice.findObject(By.clazz("android.widget.Button").text("Next"));
         if (obj != null) {
-            Log.d("Leon", "Click Next with Account Name");
+            Log.d(TAG, "Click Next with Account Name");
             obj.click();
         } else {
-            Log.d("Leon", "Press Enter with Account Name");
+            Log.d(TAG, "Press Enter with Account Name");
             mUiDevice.pressEnter();
         }
 
@@ -539,7 +539,7 @@ public class AndroidAutoConfigTest {
         } catch (Exception e) {
         }
         //make sure account name confirmed in case Next button is overlayed by soft keyboard
-        Log.d("Leon", "Press Enter again to confirm Account Name");
+        Log.d(TAG, "Press Enter again to confirm Account Name");
         mUiDevice.pressEnter();
 
         try {
@@ -556,13 +556,13 @@ public class AndroidAutoConfigTest {
             }
         }
         obj = mUiDevice.findObject(By.clazz("android.widget.EditText"));
-        Log.d("Leon", "set Google account pwd: " + googleAccountPwd);
+        Log.d(TAG, "set Google account pwd: " + googleAccountPwd);
         obj.setText(googleAccountPwd);
         try {
             Thread.sleep(2000);
         } catch (Exception e) {
         }
-        Log.d("Leon", "Click Enter with Account PWD");
+        Log.d(TAG, "Click Enter with Account PWD");
         mUiDevice.pressEnter();
 
         while (true) {
@@ -575,13 +575,13 @@ public class AndroidAutoConfigTest {
             if (obj == null) {
                 break;
             } else {
-                Log.d("Leon", "set Google account pwd: " + googleAccountPwd + " again");
+                Log.d(TAG, "set Google account pwd: " + googleAccountPwd + " again");
                 obj.setText(googleAccountPwd);
                 try {
                     Thread.sleep(2000);
                 } catch (Exception e) {
                 }
-                Log.d("Leon", "Click Enter with Account PWD again");
+                Log.d(TAG, "Click Enter with Account PWD again");
                 mUiDevice.pressEnter();
             }
         }
@@ -632,7 +632,7 @@ public class AndroidAutoConfigTest {
         // In case system ui ANR
         UiObject2 obj2 = mUiDevice.findObject(By.clazz("android.widget.Button").text("Wait"));
         if (obj2 != null) {
-            Log.d("Leon","Click Wait Button");
+            Log.d(TAG,"Click Wait Button");
             obj2.click();
         }
 
@@ -646,7 +646,7 @@ public class AndroidAutoConfigTest {
                 UiScrollable scroll = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
                 UiObject obj = scroll.getChildByText(new UiSelector().className("android.widget.TextView"), "System & updates");
                 if (obj != null) {
-                    Log.d("Leon", "Click System & Updates");
+                    Log.d(TAG, "Click System & Updates");
                     obj.click();
                     try {
                         Thread.sleep(5000);
@@ -658,14 +658,14 @@ public class AndroidAutoConfigTest {
                 obj = scroll.getChildByText(new UiSelector().className("android.widget.TextView"), "Google Play system update");
                 if (obj != null) {
                     if (obj.isEnabled()) {
-                        Log.d("Leon", "Click Google Play system update");
+                        Log.d(TAG, "Click Google Play system update");
                         obj.click();
                         try {
                             Thread.sleep(2000);
                         } catch (Exception e) {
                         }
                     } else{
-                        Log.d("Leon", "Google Play system update menu not enabled, it seems no update info received, switch to upper level menu and then back in to refresh");
+                        Log.d(TAG, "Google Play system update menu not enabled, it seems no update info received, switch to upper level menu and then back in to refresh");
                         mUiDevice.pressBack();
                         try {
                             Thread.sleep(30000);
@@ -679,7 +679,7 @@ public class AndroidAutoConfigTest {
 
             obj2 = mUiDevice.findObject(By.clazz("android.widget.Button").text("Download & install"));
             if (obj2 != null) {
-                Log.d("Leon","Click Download & install  Button");
+                Log.d(TAG,"Click Download & install  Button");
                 obj2.click();
                 try {
                     Thread.sleep(2000);
@@ -689,7 +689,7 @@ public class AndroidAutoConfigTest {
 
             obj2 = mUiDevice.findObject(By.clazz("android.widget.Button").text("Restart now"));
             if (obj2 != null) {
-                Log.d("Leon","Click Restart now Button");
+                Log.d(TAG,"Click Restart now Button");
                 obj2.click();
             }
         }
@@ -714,7 +714,7 @@ public class AndroidAutoConfigTest {
         UiObject2 obj, obj1;
         boolean wifiAlreadyConfig = false;
         boolean startClicked = false;
-        Log.d("Leon","start testGoThroughSetupWizard, wifi: " + wifi + ", loginGoogleAccount: " + loginGoogleAccount);
+        Log.d(TAG,"start testGoThroughSetupWizard, wifi: " + wifi + ", loginGoogleAccount: " + loginGoogleAccount);
 
         // If requires wifi connection or login Google account, configs for wifi and google account must be fetched
         if (wifi || loginGoogleAccount) {
@@ -742,7 +742,7 @@ public class AndroidAutoConfigTest {
                 while (true) {
                     try {
                         waitforTextAndClick("Skip", 5);
-                        Log.d("Leon", "Button to skip Sign in, Clicked");
+                        Log.d(TAG, "Button to skip Sign in, Clicked");
                     } catch (Exception e) {
                         // no Skip button any more, we can go on to next step
                         break;
@@ -755,7 +755,7 @@ public class AndroidAutoConfigTest {
             try {
                 waitforTextAndClick("Set up offline", 30);
             } catch (Exception e) {
-                Log.d("Leon", "Can't find Button \"Set up offline\", switch back and try again");
+                Log.d(TAG, "Can't find Button \"Set up offline\", switch back and try again");
                 mUiDevice.pressBack();
                 mUiDevice.waitForIdle();
 
@@ -783,7 +783,7 @@ public class AndroidAutoConfigTest {
             while (true) {
                 try {
                     waitforTextAndClick("No thanks", 5);
-                    Log.d("Leon", "Click on No thanks");
+                    Log.d(TAG, "Click on No thanks");
                 } catch (Exception e) {
                     break;
                 }
@@ -791,7 +791,7 @@ public class AndroidAutoConfigTest {
             }
         }
 
-        Log.d("Leon","end testGoThroughSetupWizard");
+        Log.d(TAG,"end testGoThroughSetupWizard");
     }
 
     private boolean checkButtonAndClickIfExists(String buttonName) throws Exception {
@@ -801,7 +801,7 @@ public class AndroidAutoConfigTest {
         UiObject2 obj = mUiDevice.findObject(By.clazz("android.widget.Button").text(buttonName));
         if (obj != null && obj.isEnabled()) {
             obj.click();
-            Log.d("Leon", "Clicked \"" + buttonName + "\" button");
+            Log.d(TAG, "Clicked \"" + buttonName + "\" button");
             mUiDevice.waitForIdle();
             try {
                 Thread.sleep(timeWaitAfterClickMs * 1000);
@@ -815,6 +815,7 @@ public class AndroidAutoConfigTest {
 
     @Test
     public void testGoThroughSetupWizardPureByWhile() throws Exception {
+        Log.d(TAG, "Enter")
         mUiDevice.wakeUp();
         try {
             Thread.sleep(5000);
@@ -845,7 +846,7 @@ public class AndroidAutoConfigTest {
                             // Increases counter
                             cntSetupOfflineButtonNotFound++;
                             if (cntSetupOfflineButtonNotFound > 20) {
-                                Log.d("Leon", "Search for \'Set up offline\' button timeout, it maybe in a bad state, try press back to recover");
+                                Log.d(TAG, "Search for \'Set up offline\' button timeout, it maybe in a bad state, try press back to recover");
                                 mUiDevice.pressBack();
                             }
                         } else {
@@ -862,7 +863,7 @@ public class AndroidAutoConfigTest {
                     checkButtonAndClickIfExists("Skip");
                     checkButtonAndClickIfExists("Skip anyway");
                 } catch (Exception e) {
-                    Log.d("Leon", "Exception during going through setupwizard while loop, ignore: " + e.toString());
+                    Log.d(TAG, "Exception during going through setupwizard while loop, ignore: " + e.toString());
                 }
             }
             try {
@@ -871,6 +872,6 @@ public class AndroidAutoConfigTest {
             }
             currentPackageName = mUiDevice.getCurrentPackageName();
         }
-        Log.d("Leon", "Going through setupwizard successfully, we have come to launcher");
+        Log.d(TAG, "Going through setupwizard successfully, we have come to launcher");
     }
 }
