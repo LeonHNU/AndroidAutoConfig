@@ -798,10 +798,11 @@ public class AndroidAutoConfigTest {
         return checkButtonAndClickIfExists(buttonName, 2);
     }
     private boolean checkButtonAndClickIfExists(String buttonName, int timeWaitAfterClickMs) throws Exception {
+        Log.d(TAG, "Check for button: \"" +buttonName + "\"");
         UiObject2 obj = mUiDevice.findObject(By.clazz("android.widget.Button").text(buttonName));
         if (obj != null && obj.isEnabled()) {
             obj.click();
-            Log.d(TAG, "Clicked \"" + buttonName + "\" button");
+            Log.d(TAG, "Clicked on \"" + buttonName + "\" button");
             mUiDevice.waitForIdle();
             try {
                 Thread.sleep(timeWaitAfterClickMs * 1000);
@@ -809,14 +810,16 @@ public class AndroidAutoConfigTest {
             }
             return true;
         } else {
+            Log.d(TAG, "Button: \"" +buttonName + "\" not found");
             return false;
         }
     }
 
     @Test
     public void testGoThroughSetupWizardPureByWhile() throws Exception {
-        Log.d(TAG, "Enter")
+        Log.d(TAG, "Enter testGoThroughSetupWizardPureByWhile");
         mUiDevice.wakeUp();
+        Log.d(TAG, "Device wake up");
         try {
             Thread.sleep(5000);
         } catch (Exception e) {
@@ -826,51 +829,65 @@ public class AndroidAutoConfigTest {
         boolean inSetupWizardOnce = false;
         boolean shouldCheckSetupOfflineButton = false;
         int cntSetupOfflineButtonNotFound = 0;
+
         while (!inSetupWizardOnce || !PACKAGE_NAME_LAUNCHER.equals(currentPackageName)) {
+            Log.d(TAG, "testGoThroughSetupWizardPureByWhile step into while");
+
+            // Make sure that we're in setup wizard
             if (!inSetupWizardOnce) {
                 if (PACKAGE_NAME_SETUPWIZARD.equals(currentPackageName)) {
+                    Log.d(TAG, "testGoThroughSetupWizardPureByWhile found current package setupwizard");
                     inSetupWizardOnce = true;
-                }
-            } else {
-                try {
-                    if (checkButtonAndClickIfExists("Start")) {
-                        // If "start" button is clicked, we also start to check "Set up offline" button
-                        // If "Set up offline" button doesn't appear for a certain time, it may got some
-                        // problem to get the button displayed. We can get back and start all over again
-                        // as a workaround.
-                        shouldCheckSetupOfflineButton = true;
-                        cntSetupOfflineButtonNotFound = 0;
-                    }
-                    if (!checkButtonAndClickIfExists("Set up offline")) {
-                        if (shouldCheckSetupOfflineButton) {
-                            // Increases counter
-                            cntSetupOfflineButtonNotFound++;
-                            if (cntSetupOfflineButtonNotFound > 20) {
-                                Log.d(TAG, "Search for \'Set up offline\' button timeout, it maybe in a bad state, try press back to recover");
-                                mUiDevice.pressBack();
-                            }
-                        } else {
-
-                            // We have found "Set up offline" button, no need to check it now.
-                            shouldCheckSetupOfflineButton = false;
-                            cntSetupOfflineButtonNotFound = 0;
-                        }
-                    }
-                    checkButtonAndClickIfExists("Continue");
-                    checkButtonAndClickIfExists("Next");
-                    checkButtonAndClickIfExists("More");
-                    checkButtonAndClickIfExists("Accept");
-                    checkButtonAndClickIfExists("Skip");
-                    checkButtonAndClickIfExists("Skip anyway");
-                } catch (Exception e) {
-                    Log.d(TAG, "Exception during going through setupwizard while loop, ignore: " + e.toString());
+                } else {
+                    Log.d(TAG, "testGoThroughSetupWizardPureByWhile still need to wait for setupwizard, current in: " + currentPackageName);
+                    Thread.sleep(2000);
+                    currentPackageName = mUiDevice.getCurrentPackageName();
+                    continue;
                 }
             }
+
+            try {
+                if (checkButtonAndClickIfExists("Start")) {
+                    // If "start" button is clicked, we also start to check "Set up offline" button
+                    // If "Set up offline" button doesn't appear for a certain time, it may got some
+                    // problem to get the button displayed. We can get back and start all over again
+                    // as a workaround.
+                    shouldCheckSetupOfflineButton = true;
+                    cntSetupOfflineButtonNotFound = 0;
+                }
+                if (!checkButtonAndClickIfExists("Set up offline")) {
+                    if (shouldCheckSetupOfflineButton) {
+                        // Increases counter
+                        cntSetupOfflineButtonNotFound++;
+                        if (cntSetupOfflineButtonNotFound > 20) {
+                            Log.d(TAG, "Search for \'Set up offline\' button timeout, it maybe in a bad state, try press back to recover");
+                            mUiDevice.pressBack();
+                        }
+                    }
+                } else {
+                    Log.d(TAG, "Set up offline button clicked, no need to check it any more");
+                    // We have found "Set up offline" button, no need to check it now.
+                    shouldCheckSetupOfflineButton = false;
+                    cntSetupOfflineButtonNotFound = 0;
+                }
+
+                checkButtonAndClickIfExists("Continue");
+                checkButtonAndClickIfExists("Next");
+                checkButtonAndClickIfExists("More");
+                checkButtonAndClickIfExists("Accept");
+                checkButtonAndClickIfExists("Skip");
+                checkButtonAndClickIfExists("Skip anyway");
+            } catch (Exception e) {
+                Log.d(TAG, "Exception during going through setupwizard while loop, ignore: " + e.toString());
+            }
+
             try {
                 Thread.sleep(2000);
             } catch (Exception e) {
             }
+
             currentPackageName = mUiDevice.getCurrentPackageName();
+            Log.d(TAG, "testGoThroughSetupWizardPureByWhile current package: " + currentPackageName);
         }
         Log.d(TAG, "Going through setupwizard successfully, we have come to launcher");
     }
